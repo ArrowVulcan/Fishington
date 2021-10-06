@@ -1,8 +1,8 @@
 import os
 import cv2
-import numpy as np
-import ctypes
 import mss
+import numpy
+import ctypes
 
 screensize = ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)
 
@@ -19,8 +19,8 @@ class image:
             self.screen = sct.grab({"left": self.left, "top": self.top, "width": self.width, "height": self.height}) # Capture screen / Screenshot
             #self.screenFull = sct.grab({"left": 0, "top": 0, "width": screensize[0], "height": screensize[1]}) # Capture screen / Screenshot (Full size)
 
-        self.image = np.array(self.screen)
-        #self.imageFull = np.array(self.screenFull)
+        self.image = numpy.array(self.screen)
+        #self.imageFull = numpy.array(self.screenFull)
         #self.imageFull = self.imageFull[:-self.height]
         self.grayImage = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY) # Creat a grayscale version of the image
         #self.grayImageFull = cv2.cvtColor(self.imageFull, cv2.COLOR_BGR2GRAY) # Creat a grayscale version of the full image
@@ -30,18 +30,15 @@ class image:
         img_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'images')
         self.template = cv2.imread(os.path.join(img_path, name), cv2.IMREAD_GRAYSCALE )
 
+    def set_template2(self, name, bw=False):
+        img_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'images')
+        self.template = cv2.imread(os.path.join(img_path, name), (cv2.IMREAD_COLOR, cv2.IMREAD_GRAYSCALE)[bw] )
+        return self.template
+
     def track_basket(self):
         with mss.mss() as sct:
             grab = sct.grab({"left": 1704, "top": 967, "width": 30, "height": 20})
-        self.template = np.array(grab)
-        self.template = cv2.cvtColor(self.template, cv2.COLOR_BGR2GRAY)
-        #cv2.imshow("template", self.template)
-        #cv2.resizeWindow('template', 200, 200)
-
-    def set_template2(self):
-        with mss.mss() as sct:
-            grab = sct.grab({"left": 1704, "top": 967, "width": 30, "height": 20})
-        self.template = np.array(grab)
+        self.template = numpy.array(grab)
         self.template = cv2.cvtColor(self.template, cv2.COLOR_BGR2GRAY)
         #cv2.imshow("template", self.template)
         #cv2.resizeWindow('template', 200, 200)
@@ -54,6 +51,14 @@ class image:
         #self.minValFull, self.maxValFull, self.minLocFull, self.maxLocFull = cv2.minMaxLoc(self.matchFull)
         self.bottomRight = (int(self.maxLoc[0] + self.imageWidth), int(self.maxLoc[1] + self.imageHeight)) # Get the bottom right location
         self.center = ( int(self.maxLoc[0] + (self.imageWidth/2) ), int(self.maxLoc[1] + (self.imageHeight/2) ) )
+
+    def match_template2(self, obj, img):
+        imageHeight, imageWidth = img.shape # Get width and height of template image
+        tmp = cv2.matchTemplate(obj, img, cv2.TM_CCOEFF_NORMED)
+        minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(tmp)
+        bottomRight = (int(maxLoc[0] + imageWidth), int(maxLoc[1] + imageHeight)) # Get the bottom right location
+        center = ( int(maxLoc[0] + (imageWidth/2) ), int(maxLoc[1] + (imageHeight/2) ) )
+        return [minVal, maxVal, minLoc, maxLoc, bottomRight, center]
 
     def BGR_to_RGB(self, color):
         color = list(color) # Convert tuple to list
