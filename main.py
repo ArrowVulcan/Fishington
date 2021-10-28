@@ -36,13 +36,32 @@ class SellFishes():
         print("> Selling fishes.")
 
         pathing.move("sell")
-
+        
         delay = 0.2
         movements = [(460, 325), (962, 939), (1102, 791), (1765, 723)]
-        for move in movements:
-            controller.mouse_move(move[0], move[1], delay)
-            time.sleep(0.4)
-            controller.mouse_click()
+        zones = [(441, 305), (1097, 950), (1162, 814)]
+        colors = [(255, 255, 255), (51, 41, 0), (137, 214, 255)]
+        
+        for ind, move in enumerate(movements):
+            
+            done_step = False
+
+            while done_step == False:
+
+                if ind < 3:
+                    done_step = image.check_steps(ind, zones, colors)
+                    time.sleep(0.4)
+                
+                if done_step == True:
+                    break
+
+                controller.mouse_move(move[0], move[1], delay)
+                time.sleep(0.4)
+                controller.mouse_click()
+                time.sleep(0.4)
+
+                if ind == 3:
+                    break
 
         time.sleep(1)
 
@@ -109,6 +128,9 @@ class ReelInFish():
         print("> Reel in the fish.")
 
         baitFound = False
+        left_padding = 60
+        right_padding = 580
+        middle_point = 309
 
         while True:
 
@@ -118,23 +140,27 @@ class ReelInFish():
 
             newImage.lastFound = "START"
 
-            if newImage.find_zone(136, 17):
+            if newImage.find_zone(106, 17): # 136
                 newImage.lastFound = "START"
             elif newImage.find_zone(309, 17):
                 newImage.lastFound = "CENTER"
-            elif newImage.find_zone(483, 17):
+            elif newImage.find_zone(513, 17): #483
                 newImage.lastFound = "END"
 
             if newImage.maxVal >= 0.8:
                 baitFound = True
-                if (newImage.lastFound == "START" or newImage.lastFound == "CENTER") and newImage.maxLoc[0] >= 309:
+                if (newImage.lastFound == "START") and newImage.maxLoc[0] > left_padding:
                     controller.mouse_hold(False)
-                elif (newImage.lastFound == "END" or newImage.lastFound == "CENTER") and newImage.maxLoc[0] <= 309:
+                elif (newImage.lastFound == "START") and newImage.maxLoc[0] < left_padding:
                     controller.mouse_hold(True)
-                elif newImage.maxLoc[0] < 50:
+                elif (newImage.lastFound == "END") and newImage.maxLoc[0] < right_padding:
                     controller.mouse_hold(True)
-                elif newImage.maxLoc[0] > 569:
+                elif (newImage.lastFound == "END") and newImage.maxLoc[0] > right_padding:
                     controller.mouse_hold(False)
+                elif (newImage.lastFound == "CENTER") and newImage.maxLoc[0] >= middle_point:
+                    controller.mouse_hold(False)
+                elif (newImage.lastFound == "CENTER") and newImage.maxLoc[0] <= middle_point:
+                    controller.mouse_hold(True)
             elif baitFound:
                 controller.mouse_hold(False)
                 time.sleep(2)

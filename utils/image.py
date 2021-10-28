@@ -93,5 +93,10 @@ class image:
         cv2.imshow(title, (self.grayImage, self.image)[self.color])
         #cv2.resizeWindow(title, 200, 200)
 
+    @staticmethod
+    def check_steps(step, zones, colors):
+        img = image(color=True)
+        return img.find_zone(zones[step][0], zones[step][1], color=colors[step])
+
 if __name__ == "__main__":
     print("Run main.py file!")
