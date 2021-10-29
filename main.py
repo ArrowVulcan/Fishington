@@ -38,8 +38,8 @@ class SellFishes():
         pathing.move("sell")
         
         delay = 0.2
-        movements = [(460, 325), (962, 939), (1102, 791), (1765, 723)]
-        zones = [(441, 305), (1097, 950), (1162, 814)]
+        movements = [(439, 270), (955, 906), (1111, 759), (1765, 723)]
+        zones = [(420, 248), (1103, 919), (1180, 779)]
         colors = [(255, 255, 255), (51, 41, 0), (137, 214, 255)]
         
         for ind, move in enumerate(movements):
@@ -109,7 +109,7 @@ class CheckForHook():
 
         while True:
 
-            newImage = image(933, 429, 42, 64)
+            newImage = image(820, 325, 240, 200)
             newImage.set_template("hooked.jpg")
             newImage.match_template()
             #newImage.draw_rectangle(0.6, (255, 0, 0), 3)
@@ -134,17 +134,17 @@ class ReelInFish():
 
         while True:
 
-            newImage = image(634, 860, 619, 36)
+            newImage = image(600, 740, 730, 160)
             newImage.set_template("bait.jpg")
             newImage.match_template()
 
             newImage.lastFound = "START"
 
-            if newImage.find_zone(106, 17): # 136
+            if newImage.find_zone(106, 128): # 136
                 newImage.lastFound = "START"
-            elif newImage.find_zone(309, 17):
+            elif newImage.find_zone(309, 128):
                 newImage.lastFound = "CENTER"
-            elif newImage.find_zone(513, 17): #483
+            elif newImage.find_zone(513, 128): #483
                 newImage.lastFound = "END"
 
             if newImage.maxVal >= 0.8:
@@ -164,7 +164,7 @@ class ReelInFish():
             elif baitFound:
                 controller.mouse_hold(False)
                 time.sleep(2)
-                newImage2 = image(1180, 673, 65, 60)
+                newImage2 = image(1160, 600, 140, 120)
                 newImage2.set_template("x.jpg")
                 newImage2.match_template()
 
@@ -189,14 +189,14 @@ class CloseCatchInfo():
 
         while True:
 
-            newImage = image(1180, 673, 65, 60)
+            newImage = image(1160, 600, 140, 120)
             newImage.set_template("x.jpg")
             newImage.match_template()
 
             if newImage.maxVal >= 0.8:
                 isFound = True
                 time.sleep(1)
-                controller.mouse_move(1190, 705)
+                controller.mouse_move(1220, 660)
                 time.sleep(1)
                 controller.mouse_click(0.5)
                 time.sleep(1)

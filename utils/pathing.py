@@ -91,7 +91,7 @@ def move(location):
                     img = image(color=False)
                     imgGray = img.grayImage
 
-                    matchVals = img.match_template2(imgGray, shop)
+                    matchVals = img.match_template2(imgGray, fishes)
                     if matchVals[1] > 0.75:
                         controller.mouse_move(matchVals[3][0], matchVals[3][1], 0.5)
                         controller.mouse_click()
