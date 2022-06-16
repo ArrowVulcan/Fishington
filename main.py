@@ -1,14 +1,10 @@
-import time
-import random
-from utils.image import image #type: ignore
-import utils.controller as controller #type: ignore
-import utils.pathing as pathing #type: ignore
+import libs.actions as actions
 
 #-------------------------#
 #- Classes ---------------#
 #-------------------------#
 
-class FSM():
+class Bot():
     
     def __init__(self):
         self.queue = []
@@ -16,7 +12,7 @@ class FSM():
         self.maxFishes = 6
 
     def start(self, cls=None):
-        print("[FSM] Fishing bot started.")
+        print("[Bot] Fishing bot started.")
         
         if cls:
             self.add_to_queue(cls)
@@ -24,7 +20,7 @@ class FSM():
         while self.queue:
             self.queue.pop(0)()(self)
 
-        print("[FSM] Fishing bot ended.")
+        print("[Bot] Fishing bot ended.")
 
     def add_to_queue(self, cls):
         self.queue.append(cls)
@@ -32,201 +28,68 @@ class FSM():
 class SellFishes():
 
     @staticmethod
-    def __call__(fsm):
+    def __call__(bot):
         print("> Selling fishes.")
-
-        pathing.move("sell")
-        
-        delay = 0.2
-        movements = [(439, 270), (955, 906), (1111, 759), (1765, 723)]
-        zones = [(420, 248), (1103, 919), (1180, 779)]
-        colors = [(255, 255, 255), (51, 41, 0), (137, 214, 255)]
-        
-        for ind, move in enumerate(movements):
-            
-            done_step = False
-
-            while done_step == False:
-
-                if ind < 3:
-                    done_step = image.check_steps(ind, zones, colors)
-                    time.sleep(0.4)
-                
-                if done_step == True:
-                    break
-
-                controller.mouse_move(move[0], move[1], delay)
-                time.sleep(0.4)
-                controller.mouse_click()
-                time.sleep(0.4)
-
-                if ind == 3:
-                    break
-
-        time.sleep(1)
-
-        fsm.fishes = 0
-        fsm.add_to_queue(FindWater)
-
-class CheckBasket():
-
-    @staticmethod
-    def __call__(fsm):
-        print("> Checking basket.")
-
-        #newImage = image(1670, 965, 30, 25)
-        #newImage.track_basket()
-        #newImage.match_template()
-        #basket = newImage.check_fishbasket(-0.13)
-
-        #if basket:
-        #    fsm.add_to_queue(SellFishes)
-        #else:
-        #    fsm.add_to_queue(FindWater)
-
-        fsm.add_to_queue(SellFishes)
+        actions.sell_fishes()
+        bot.fishes = 0
+        print(f"> Fish: {bot.fishes}/{bot.maxFishes}")
+        bot.add_to_queue(FindWater)
 
 class TossFishingrod():
     
     @staticmethod
-    def __call__(fsm):
+    def __call__(bot):
         print("> Tossing the rod.")
-
-        horizontal_spread = random.randint(-100, 100)
-        vertical_spread = random.randint(-100, 100)
-        strength = random.uniform(0.5, 1.0)
-
-        controller.mouse_move(960 + horizontal_spread, 850 + vertical_spread)
-        controller.mouse_click(strength)
-
-        fsm.add_to_queue(CheckForHook)
+        actions.toss_fishingrod()
+        bot.add_to_queue(CheckForHook)
 
 class CheckForHook():
 
     @staticmethod
-    def __call__(fsm):
+    def __call__(bot):
         print("> Checking for hook.")
-
-        while True:
-
-            newImage = image(820, 325, 240, 200)
-            newImage.set_template("hooked.jpg")
-            newImage.match_template()
-            #newImage.draw_rectangle(0.6, (255, 0, 0), 3)
-
-            if newImage.maxVal >= 0.6:
-                hook_speed = random.uniform(0.15, 0.45)
-                time.sleep(hook_speed)
-                controller.mouse_click()
-                fsm.add_to_queue(ReelInFish)
-                break
+        actions.check_for_hook()
+        bot.add_to_queue(ReelInFish)
 
 class ReelInFish():
     
     @staticmethod
-    def __call__(fsm):
+    def __call__(bot):
         print("> Reel in the fish.")
-
-        baitFound = False
-        left_padding = 60
-        right_padding = 580
-        middle_point = 309
-
-        while True:
-
-            newImage = image(600, 740, 730, 160)
-            newImage.set_template("bait.jpg")
-            newImage.match_template()
-
-            newImage.lastFound = "START"
-
-            if newImage.find_zone(106, 128): # 136
-                newImage.lastFound = "START"
-            elif newImage.find_zone(309, 128):
-                newImage.lastFound = "CENTER"
-            elif newImage.find_zone(513, 128): #483
-                newImage.lastFound = "END"
-
-            if newImage.maxVal >= 0.8:
-                baitFound = True
-                if (newImage.lastFound == "START") and newImage.maxLoc[0] > left_padding:
-                    controller.mouse_hold(False)
-                elif (newImage.lastFound == "START") and newImage.maxLoc[0] < left_padding:
-                    controller.mouse_hold(True)
-                elif (newImage.lastFound == "END") and newImage.maxLoc[0] < right_padding:
-                    controller.mouse_hold(True)
-                elif (newImage.lastFound == "END") and newImage.maxLoc[0] > right_padding:
-                    controller.mouse_hold(False)
-                elif (newImage.lastFound == "CENTER") and newImage.maxLoc[0] >= middle_point:
-                    controller.mouse_hold(False)
-                elif (newImage.lastFound == "CENTER") and newImage.maxLoc[0] <= middle_point:
-                    controller.mouse_hold(True)
-            elif baitFound:
-                controller.mouse_hold(False)
-                time.sleep(2)
-                newImage2 = image(1160, 600, 140, 120)
-                newImage2.set_template("x.jpg")
-                newImage2.match_template()
-
-                if newImage2.maxVal >= 0.8:
-                    fsm.fishes += 1
-                    fsm.add_to_queue(CloseCatchInfo)
-                    break
-                else:
-                    print("Failed to catch!")
-                    time.sleep(1)
-                    fsm.add_to_queue(TossFishingrod)
-                    break
+        success = actions.reel_in_fish()
+        if not success:
+            bot.add_to_queue(TossFishingrod)
+        else:
+            bot.fishes += 1
+            print(f"> Fish: {bot.fishes}/{bot.maxFishes}")
+            bot.add_to_queue(CloseCatchInfo)
 
 class CloseCatchInfo():
 
     @staticmethod
-    def __call__(fsm):
+    def __call__(bot):
         print("> Closing catch window.")
-
-        isFound = False
-        isClosed = False
-
-        while True:
-
-            newImage = image(1160, 600, 140, 120)
-            newImage.set_template("x.jpg")
-            newImage.match_template()
-
-            if newImage.maxVal >= 0.8:
-                isFound = True
-                time.sleep(1)
-                controller.mouse_move(1220, 660)
-                time.sleep(1)
-                controller.mouse_click(0.5)
-                time.sleep(1)
-                isClosed = True
-            else:
-                isFound = False
-            
-            if not isFound and isClosed:
-                if fsm.fishes >= fsm.maxFishes:
-                    fsm.add_to_queue(SellFishes)
-                else:
-                    fsm.add_to_queue(TossFishingrod)
-                break
+        actions.close_catch_info()
+        if bot.fishes == bot.maxFishes:
+            bot.add_to_queue(SellFishes)
+        else:
+            bot.add_to_queue(TossFishingrod)
 
 class FindWater():
 
     @staticmethod
-    def __call__(fsm):
+    def __call__(bot):
         print("> Finding water.")
-
-        pathing.move("fish")
-        fsm.add_to_queue(TossFishingrod)
+        actions.find_water()
+        bot.add_to_queue(TossFishingrod)
 
 #-------------------------#
 #- Main ------------------#
 #-------------------------#
 
 def main():
-    fsm = FSM()
-    fsm.start(FindWater)
+    bot = Bot()
+    bot.start(FindWater)
 
 if __name__ == "__main__":
     main()
